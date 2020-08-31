@@ -1,12 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const mysql = require('mysql2/promise');
-const { response } = require('express');
-const jwt = require('jsonwebtoken');
-const jwkToPem = require('jwk-to-pem');
-const aws = require('aws-sdk');
-const asyncMap = require('./helpers');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const mysql = require("mysql2/promise");
+const { response } = require("express");
+// const jwt = require('jsonwebtoken');
+// const jwkToPem = require('jwk-to-pem');
+// const aws = require('aws-sdk');
+const asyncMap = require("./helpers");
 const PORT = 4000;
 
 const app = express();
@@ -22,21 +22,29 @@ const pool = mysql.createPool({
 });
 
 // POST User
-app.post('/user', async (request, response) => {
+app.post("/user", async (request, response) => {
   try {
-    console.log('postuser');
+    console.log("postuser");
+    console.log([
+      request.body.username,
+      request.body.firstName,
+      request.body.lastName,
+      request.body.role
+    ]);
+
     if (
       !request.body.username ||
       !request.body.firstName ||
       !request.body.lastName ||
       !request.body.role
     ) {
-      response.status(400).send({ message: 'enter all required information' });
+      return response
+        .status(400)
+        .send({ message: "enter all required information" });
     }
-
     const con = await pool.getConnection();
     const queryResponse = await con.execute(
-      'INSERT INTO homeworkapp.user (username, firstName, lastName, role) VALUES (?, ?, ?, ?)',
+      "INSERT INTO homeworkapp.user (username, firstName, lastName, role) VALUES (?, ?, ?, ?)",
       [
         request.body.username,
         request.body.firstName,
@@ -56,9 +64,9 @@ app.post('/user', async (request, response) => {
 });
 
 // GET ONE User at Login
-app.get('/user', authorizeUser, async (request, response) => {
+app.get("/user", authorizeUser, async (request, response) => {
   try {
-    console.log('GET ONE USER');
+    console.log("GET ONE USER");
 
     /*const email = request.decodedToken.email;
     if (!email) {
@@ -67,7 +75,7 @@ app.get('/user', authorizeUser, async (request, response) => {
 
     const con = await pool.getConnection();
     const recordset = await con.execute(
-      'SELECT * FROM homeworkapp.user WHERE username=?',
+      "SELECT * FROM homeworkapp.user WHERE username=?",
       [request.query.username]
     );
     con.release();
@@ -82,13 +90,13 @@ app.get('/user', authorizeUser, async (request, response) => {
 });
 
 // POST Student
-app.post('/student', authorizeUser, async (request, response) => {
+app.post("/student", authorizeUser, async (request, response) => {
   try {
-    console.log('poststudentinfo');
+    console.log("poststudentinfo");
 
     const con = await pool.getConnection();
     const queryResponse = await con.execute(
-      'INSERT INTO homeworkapp.student ( username, skype, bio, birthday, profilepic) VALUES ( ?, ?, ?, ?, ?)',
+      "INSERT INTO homeworkapp.student ( username, skype, bio, birthday, profilepic) VALUES ( ?, ?, ?, ?, ?)",
       [
         request.body.username,
         request.body.skype ? request.body.skype : null,
@@ -109,13 +117,13 @@ app.post('/student', authorizeUser, async (request, response) => {
 });
 
 // POST Teacher
-app.post('/teacher', authorizeUser, async (request, response) => {
+app.post("/teacher", authorizeUser, async (request, response) => {
   try {
-    console.log('poststudentinfo');
+    console.log("poststudentinfo");
 
     const con = await pool.getConnection();
     const queryResponse = await con.execute(
-      'INSERT INTO homeworkapp.teacher ( username, skype, bio, birthday, profilepic, subject, experience, method, price) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      "INSERT INTO homeworkapp.teacher ( username, skype, bio, birthday, profilepic, subject, experience, method, price) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         request.body.username,
         request.body.skype ? request.body.skype : null,
@@ -140,9 +148,9 @@ app.post('/teacher', authorizeUser, async (request, response) => {
 });
 
 // GET MATCHING Teachers
-app.get('/teacher', authorizeUser, async (request, response) => {
+app.get("/teacher", authorizeUser, async (request, response) => {
   try {
-    console.log('GET MATCHING TEACHERS');
+    console.log("GET MATCHING TEACHERS");
     const conn = await pool.getConnection();
     const recordset = await conn.execute(
       `SELECT user.firstName, user.lastName, user.username FROM homeworkapp.user INNER JOIN homeworkapp.teacher ON user.username = teacher.username WHERE subject = ?`,
@@ -158,9 +166,9 @@ app.get('/teacher', authorizeUser, async (request, response) => {
 });
 
 //GET One Matching Teacher Profile
-app.get('/teacher/profile', authorizeUser, async (request, response) => {
+app.get("/teacher/profile", authorizeUser, async (request, response) => {
   try {
-    console.log('GET ONE MATCHING TEACHER PROFILE');
+    console.log("GET ONE MATCHING TEACHER PROFILE");
     const conn = await pool.getConnection();
     const recordset = await conn.execute(
       `SELECT * FROM homeworkapp.teacher WHERE username = ?`,
@@ -176,9 +184,9 @@ app.get('/teacher/profile', authorizeUser, async (request, response) => {
 });
 
 //GET One Matching Student Profile
-app.get('/student/profile', authorizeUser, async (request, response) => {
+app.get("/student/profile", authorizeUser, async (request, response) => {
   try {
-    console.log('GET ONE MATCHING STUDENT PROFILE');
+    console.log("GET ONE MATCHING STUDENT PROFILE");
     const conn = await pool.getConnection();
     const recordset = await conn.execute(
       `SELECT * FROM homeworkapp.student WHERE username = ?`,
@@ -194,9 +202,9 @@ app.get('/student/profile', authorizeUser, async (request, response) => {
 });
 
 // GET ALL Messages for teachers
-app.get('/teacher/message', authorizeUser, async (request, response) => {
+app.get("/teacher/message", authorizeUser, async (request, response) => {
   try {
-    console.log('GET ALL TEACHER MESSAGES');
+    console.log("GET ALL TEACHER MESSAGES");
     const conn = await pool.getConnection();
     const recordset = await conn.execute(
       `SELECT * FROM homeworkapp.message WHERE tousername = ?`,
@@ -212,9 +220,9 @@ app.get('/teacher/message', authorizeUser, async (request, response) => {
 });
 
 // GET ALL Messages for students
-app.get('/student/message', authorizeUser, async (request, response) => {
+app.get("/student/message", authorizeUser, async (request, response) => {
   try {
-    console.log('GET ALL STUDENT MESSAGES');
+    console.log("GET ALL STUDENT MESSAGES");
     const conn = await pool.getConnection();
     const recordset = await conn.execute(
       `SELECT * FROM homeworkapp.message WHERE tousername = ?`,
@@ -230,13 +238,13 @@ app.get('/student/message', authorizeUser, async (request, response) => {
 });
 
 // POST Message
-app.post('/message', authorizeUser, async (request, response) => {
+app.post("/message", authorizeUser, async (request, response) => {
   try {
-    console.log('POST MESSAGE');
+    console.log("POST MESSAGE");
 
     const con = await pool.getConnection();
     const queryResponse = await con.execute(
-      'INSERT INTO homeworkapp.message (username, tousername, date, msgsubject, msgbody) VALUES ( ?, ?, ?, ?, ?)',
+      "INSERT INTO homeworkapp.message (username, tousername, date, msgsubject, msgbody) VALUES ( ?, ?, ?, ?, ?)",
       [
         request.body.username,
         request.body.tousername,
@@ -258,7 +266,7 @@ app.post('/message', authorizeUser, async (request, response) => {
 
 // Authorize User
 function authorizeUser(request, response, next) {
-  console.log('AuthroizeUser');
+  console.log("AuthroizeUser");
 
   /*if (request.query.token) request.body.token = request.query.token;
   const tokenFromRequestBody = request.body.token;*/
